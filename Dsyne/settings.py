@@ -33,12 +33,10 @@ SECRET_KEY = config(
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+DEBUG = False
 
-if not DEBUG:
-    ALLOWED_HOSTS = [config("ALLOWED_HOSTS"), '*']
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost")
 
 
 # Application definition
@@ -62,7 +60,7 @@ INSTALLED_APPS = [
     "cloudinary",
     # internal app
     "blog",
-   
+
     # main app
     "account",
     # for django filer
@@ -85,7 +83,7 @@ INSTALLED_APPS = [
     "sekizai",
     "translations",
     'tinymce',
-     "portfolio",
+    "portfolio",
     "whitenoise.runserver_nostatic",
 
 ]
@@ -136,7 +134,7 @@ TEMPLATES = [
 CMS_TEMPLATES = [
     ("base.html", "Empty template"),
     ("portfolio/index.html", "portfolio template"),
-]  
+]
 
 WSGI_APPLICATION = "Dsyne.wsgi.application"
 
@@ -145,6 +143,7 @@ WSGI_APPLICATION = "Dsyne.wsgi.application"
 
 
 # DATABASES = {}
+
 
 # if DEBUG:
 DATABASES = {
@@ -173,16 +172,55 @@ POSTGRES_READY = (
 )
 
 if POSTGRES_READY:
+
+ if DEBUG:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": POSTGRES_DB,
-            "USER": POSTGRES_USER,
-            "PASSWORD": POSTGRES_PASSWORD,
-            "HOST": POSTGRES_HOST,
-            "PORT": POSTGRES_PORT,
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+else:
+    DATABASES = {
+        "default": {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'dsyne',
+            'USER': config('POSTGRES_USER'),
+            'PASSWORD': config("POSTGRES_PASSWORD"),
+            'HOST': config("POSTGRES_HOST"),
+            'PORT': config("POSTGRES_PORT"),
+            'OPTIONS': {
+                'sslmode': 'require'
+            }
+        }
+    }
+
+
+# POSTGRES_DB = config("POSTGRES_DB")
+# POSTGRES_PASSWORD = config("POSTGRES_PASSWORD")
+# POSTGRES_USER = config("POSTGRES_USER")
+# POSTGRES_HOST = config("POSTGRES_HOST")
+# POSTGRES_PORT = config("POSTGRES_PORT")
+
+# POSTGRES_READY = (
+#     POSTGRES_DB is not None
+#     and POSTGRES_PASSWORD is not None
+#     and POSTGRES_USER is not None
+#     and POSTGRES_HOST is not None
+#     and POSTGRES_PORT is not None
+# )
+
+# if POSTGRES_READY:
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": POSTGRES_DB,
+#             "USER": POSTGRES_USER,
+#             "PASSWORD": POSTGRES_PASSWORD,
+#             "HOST": POSTGRES_HOST,
+#             "PORT": POSTGRES_PORT,
+#         }
+#     }
 
 
 db_from_env = dj_database_url.config(conn_max_age=600)
@@ -234,16 +272,16 @@ USE_L10N = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = "/static/"
 
+# The URL to use when referring to static files (where they will be served from)
+STATIC_URL = '/static/'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 # add the directory of your static files here.
 # Make sure the name are different from those of other static files
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    # e.g "/var/www/static/",
-]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # media urls for django_cms
 MEDIA_URL = "/media/"
@@ -291,10 +329,6 @@ JAZZMIN_SETTINGS = {
 
     # Welcome text on the login screen
     "welcome_sign": "Welcome to the Dsyne CMS"
-
-
-
-
 }
 
 JAZZMIN_UI_TWEAKS = {
@@ -308,5 +342,25 @@ JAZZMIN_UI_TWEAKS = {
 #     'skin': 'moono',
 # }
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'handlers': {
+        'logfile': {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': 'D:\home\site\wwwroot\myapp.log'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['logfile'],
+            'level': 'ERROR',
+            'propagate': False,
+        }
+    }
+}
